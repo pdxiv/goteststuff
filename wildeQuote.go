@@ -1,4 +1,11 @@
 package main
+// A fun little project to auto-generate Oscar Wilde quotes using Markov Chains
+
+// - One refinement idea, is that if there is no more than 1 option for
+// choosing the next word, with the current lookbehind setting, go to a lower
+// lookbehind setting, to make sure that things are more interesting. This
+// should make expressions both more grammatically correct, while keeping things
+// interesting.
 
 import (
 	"fmt"
