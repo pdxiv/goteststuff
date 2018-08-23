@@ -1,4 +1,5 @@
 package main
+
 // A fun little project to auto-generate Oscar Wilde quotes using Markov Chains
 
 // - One refinement idea, is that if there is no more than 1 option for
@@ -257,7 +258,7 @@ func main() {
 	}
 
 	// Put tokens in an array to get a fixed order
-	for k, _ := range tokenMap {
+	for k := range tokenMap {
 		token = append(token, k)
 	}
 
