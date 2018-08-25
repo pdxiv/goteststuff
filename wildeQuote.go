@@ -14,7 +14,7 @@ import (
 	"strings"
 )
 
-const setSize = 1 // Number of token combinations to get stats for
+const setSize = 2 // Number of token combinations to get stats for
 
 func main() {
 	wildeQuote := [...]string{
@@ -262,7 +262,8 @@ func main() {
 		token = append(token, k)
 	}
 
-	stats := make(map[[setSize + 1]int]int)
+	var stats = map[[setSize]int]map[int]int{}
+
 	for _, quote := range wildeQuote {
 		lowerCaseQuote := strings.ToLower(quote)
 		spaceSeparatedQuote := strings.Split(lowerCaseQuote, " ")
@@ -295,14 +296,19 @@ func main() {
 		fmt.Println(tokenList)
 
 		// Gather statistics
-		// ...this isn't outputting the right thing at the moment. We should do a "map of maps".
 		// Details for doing this: https://stackoverflow.com/questions/44305617/nested-maps-in-golang
-		var derp [setSize + 1]int
+		var derp [setSize]int
 		for i := 0; i < len(tokenList)-setSize; i++ {
-			for j := 0; j < setSize+1; j++ {
+			// New map of maps stuff below
+			for j := 0; j < setSize; j++ {
 				derp[j] = tokenList[i+j]
 			}
-			stats[derp]++
+			// check if map is initialized. otherwise, initialize it
+			if stats[derp] == nil {
+				stats[derp] = map[int]int{}
+
+			}
+			stats[derp][tokenList[i+setSize]]++
 			fmt.Println(derp, stats[derp])
 		}
 	}
