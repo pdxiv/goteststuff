@@ -10,13 +10,16 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"regexp"
 	"strings"
+	"time"
 )
 
 const setSize = 2 // Number of token combinations to get stats for
 
 func main() {
+	rand.Seed(time.Now().UTC().UnixNano())
 	wildeQuote := [...]string{
 		"A cynic is a man who knows the price of everything, and the value of nothing.",
 		"A gentleman is one who never hurts anyone's feelings unintentionally.",
@@ -263,6 +266,7 @@ func main() {
 	}
 
 	var stats = map[[setSize]int]map[int]int{}
+	var statsOccurrance = map[[setSize]int]int{}
 
 	for _, quote := range wildeQuote {
 		lowerCaseQuote := strings.ToLower(quote)
@@ -276,7 +280,7 @@ func main() {
 				tokenTextList = append(tokenTextList, submatch[2])
 			}
 		}
-		fmt.Println(tokenTextList)
+
 		// Convert the text tokens into numerical codes
 		var tokenList []int
 		// Add a "start of line" token(s) at beginning
@@ -287,29 +291,63 @@ func main() {
 			for i, v := range token {
 				if v == textToken {
 					tokenList = append(tokenList, i)
-					fmt.Println(i, v)
 				}
 			}
 		}
 		// Add an "end of line token"
 		tokenList = append(tokenList, -2)
-		fmt.Println(tokenList)
 
 		// Gather statistics
 		// Details for doing this: https://stackoverflow.com/questions/44305617/nested-maps-in-golang
 		var derp [setSize]int
 		for i := 0; i < len(tokenList)-setSize; i++ {
-			// New map of maps stuff below
+			// Map of maps stuff below
 			for j := 0; j < setSize; j++ {
 				derp[j] = tokenList[i+j]
 			}
-			// check if map is initialized. otherwise, initialize it
+			// Check if map is initialized. Otherwise, initialize it
 			if stats[derp] == nil {
 				stats[derp] = map[int]int{}
-
 			}
 			stats[derp][tokenList[i+setSize]]++
-			fmt.Println(derp, stats[derp])
 		}
 	}
+
+	for k, v := range stats {
+		for _, occurrences := range v {
+			statsOccurrance[k] += occurrences // To be used for randomizing
+		}
+	}
+
+	var generatedList []int
+	// Initialize generated slice with "start of sentence" markers
+	for i := 0; i < setSize; i++ {
+		generatedList = append(generatedList, -1)
+	}
+	var derp [setSize]int
+	for generatedList[len(generatedList)-1] != -2 {
+		// Fill array that is used for map key
+		for i := 0; i < setSize; i++ {
+			derp[i] = generatedList[len(generatedList)-setSize+i]
+		}
+		// Select a random value out of the possibilities
+		randomSelection := rand.Intn(statsOccurrance[derp])
+		counter := 0
+		for k, v := range stats[derp] {
+			counter += v
+			if randomSelection < counter {
+				generatedList = append(generatedList, k)
+				if k == -2 {
+					break
+				}
+				break
+			}
+		}
+	}
+	generatedList = generatedList[setSize:]
+	generatedList = generatedList[0 : len(generatedList)-1]
+	for _, v := range generatedList {
+		fmt.Print(token[v], " ")
+	}
+	fmt.Println()
 }
