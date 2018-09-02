@@ -12,7 +12,7 @@ type publishMessage struct {
 
 func main() {
 	newConnections := make(chan net.Conn, 128)
-	deadConnections := make(chan int, 128)
+	deadConnectionsIDs := make(chan int, 128)
 	publishes := make(chan publishMessage, 128)
 	connections := make(map[int]net.Conn)
 	listener, err := net.Listen("tcp", ":8080")
@@ -27,17 +27,20 @@ func main() {
 		select {
 		case connection := <-newConnections:
 			connections[connectionCounter] = connection
-			go newConnectionSession(connection, publishes, deadConnections, connectionCounter)
+			go newConnectionSession(connection, publishes, deadConnectionsIDs, connectionCounter)
 			connectionCounter++
 			log.Print("Number of connections: ", len(connections))
-		case deadConnection := <-deadConnections:
-			_ = connections[deadConnection].Close()
-			delete(connections, deadConnection)
+		case deadConnectionID := <-deadConnectionsIDs:
+			_ = connections[deadConnectionID].Close()
+			delete(connections, deadConnectionID)
 			log.Print("Number of connections: ", len(connections))
 		case publish := <-publishes:
 			for session, connection := range connections {
 				if publish.sessionID != session {
-					go newPublish(publish, connection, deadConnections)
+					go newPublish(publish, connection, deadConnectionsIDs)
+				} else {
+					originatorPublish := publishMessage{message: []byte("Thanks for publishing!\n"), sessionID: publish.sessionID}
+					go newPublish(originatorPublish, connection, deadConnectionsIDs)
 				}
 			}
 		}
@@ -45,25 +48,25 @@ func main() {
 	listener.Close()
 }
 
-func newPublish(publish publishMessage, connection net.Conn, deadConnections chan int) {
+func newPublish(publish publishMessage, connection net.Conn, deadConnectionsIDs chan int) {
 	totalWritten := 0
 	for totalWritten < len(publish.message) {
 		writtenThisCall, err := connection.Write(publish.message[totalWritten:])
 		if err != nil {
-			deadConnections <- publish.sessionID
+			deadConnectionsIDs <- publish.sessionID
 			break
 		}
 		totalWritten += writtenThisCall
 	}
 }
 
-func newConnectionSession(connection net.Conn, publishes chan publishMessage, deadConnections chan int, id int) {
+func newConnectionSession(connection net.Conn, publishes chan publishMessage, deadConnectionsIDs chan int, id int) {
 	buf := make([]byte, 1024)
 	// Wait for incoming events
 	for {
 		numberOfBytes, err := connection.Read(buf)
 		if err != nil {
-			deadConnections <- id
+			deadConnectionsIDs <- id
 			break
 		} else {
 			var messageData publishMessage
