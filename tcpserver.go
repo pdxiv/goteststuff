@@ -35,6 +35,10 @@ func main() {
 			delete(connections, deadConnectionID)
 			log.Print("Number of connections: ", len(connections))
 		case publish := <-publishes:
+			if string(publish.message) == "shit\n" {
+				originatorPublish := publishMessage{message: []byte("That's a bad word!!\n"), sessionID: publish.sessionID}
+				go newPublish(originatorPublish, connections[publish.sessionID], deadConnectionsIDs)
+			}
 			for session, connection := range connections {
 				if publish.sessionID != session {
 					go newPublish(publish, connection, deadConnectionsIDs)
