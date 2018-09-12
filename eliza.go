@@ -10,13 +10,11 @@ import (
 )
 
 func main() {
-	fmt.Println("Eliza: " + ElizaHi())
-
+	fmt.Println("Eliza: " + elizaHi())
 	for {
 		statement := getInput()
-		fmt.Println("Eliza: " + ReplyTo(statement))
-
-		if IsQuitStatement(statement) {
+		fmt.Println("Eliza: " + replyTo(statement))
+		if isQuitStatement(statement) {
 			break
 		}
 	}
@@ -29,32 +27,29 @@ func getInput() string {
 	return input
 }
 
-// ElizaHi will return a random introductory sentence for ELIZA.
-func ElizaHi() string {
-	return randChoice(Introductions)
+// elizaHi will return a random introductory sentence for ELIZA.
+func elizaHi() string {
+	return randChoice(introductions)
 }
 
-// ElizaHi will return a random goodbye sentence for ELIZA.
-func ElizaBye() string {
-	return randChoice(Goodbyes)
+// elizaHi will return a random goodbye sentence for ELIZA.
+func elizaBye() string {
+	return randChoice(goodbyes)
 }
 
-// ReplyTo will construct a reply for a given statement using ELIZA's rules.
-func ReplyTo(statement string) string {
+// replyTo will construct a reply for a given statement using ELIZA's rules.
+func replyTo(statement string) string {
 	// First, preprocess the statement for more effective matching
 	statement = preprocess(statement)
-
 	// Then, we check if this is a quit statement
-	if IsQuitStatement(statement) {
-		return ElizaBye()
+	if isQuitStatement(statement) {
+		return elizaBye()
 	}
-
 	// Next, we try to match the statement to a statement that ELIZA can
 	// recognize, and construct a pre-determined, appropriate response.
-	for pattern, responses := range Psychobabble {
+	for pattern, responses := range psychobabble {
 		re := regexp.MustCompile(pattern)
 		matches := re.FindStringSubmatch(statement)
-
 		// If the statement matched any recognizable statements.
 		if len(matches) > 0 {
 			// If we matched a regex group in parentheses, get the first match.
@@ -64,7 +59,6 @@ func ReplyTo(statement string) string {
 			if len(matches) > 1 {
 				fragment = reflect(matches[1])
 			}
-
 			// Choose a random appropriate response, and format it with the
 			// fragment, if needed.
 			response := randChoice(responses)
@@ -74,15 +68,14 @@ func ReplyTo(statement string) string {
 			return response
 		}
 	}
-
 	// If no patterns were matched, return a default response.
-	return randChoice(DefaultResponses)
+	return randChoice(defaultResponses)
 }
 
-// IsQuitStatement returns if the statement is a quit statement
-func IsQuitStatement(statement string) bool {
+// isQuitStatement returns if the statement is a quit statement
+func isQuitStatement(statement string) bool {
 	statement = preprocess(statement)
-	for _, quitStatement := range QuitStatements {
+	for _, quitStatement := range quitStatements {
 		if statement == quitStatement {
 			return true
 		}
@@ -101,7 +94,7 @@ func preprocess(statement string) string {
 func reflect(fragment string) string {
 	words := strings.Split(fragment, " ")
 	for i, word := range words {
-		if reflectedWord, ok := ReflectedWords[word]; ok {
+		if reflectedWord, ok := reflectedWords[word]; ok {
 			words[i] = reflectedWord
 		}
 	}
@@ -115,7 +108,7 @@ func randChoice(list []string) string {
 }
 
 // A list of introduction sentences for ELIZA.
-var Introductions = []string{
+var introductions = []string{
 	"Hello. How are you feeling today?",
 	"How do you do. Please tell me your problem.",
 	"Please tell me what's been bothering you.",
@@ -123,7 +116,7 @@ var Introductions = []string{
 }
 
 // A list of goodbye sentences for ELIZA.
-var Goodbyes = []string{
+var goodbyes = []string{
 	"Goodbye. It was nice talking to you.",
 	"Thank you for talking with me.",
 	"Thank you, that will be $150. Have a good day!",
@@ -136,7 +129,7 @@ var Goodbyes = []string{
 
 // Note: This may be slightly non-deterministic, since map iteration may be out
 // of order, so a broader regex may be matched before a more specific one.
-var Psychobabble = map[string][]string{
+var psychobabble = map[string][]string{
 	`i need (.*)`: {
 		"Why do you need %s?",
 		"Would it really help you to get %s?",
@@ -354,7 +347,7 @@ var Psychobabble = map[string][]string{
 
 // If ELIZA doesn't understand the question, then it will reply with one of
 // these default responses
-var DefaultResponses = []string{
+var defaultResponses = []string{
 	"Please tell me more.",
 	"Let's change focus a bit... Tell me about your family.",
 	"Can you elaborate on that?",
@@ -366,7 +359,7 @@ var DefaultResponses = []string{
 }
 
 // A list of statements that indicate the user wants to end the conversation
-var QuitStatements = []string{
+var quitStatements = []string{
 	"goodbye",
 	"bye",
 	"quit",
@@ -376,7 +369,7 @@ var QuitStatements = []string{
 // This is a table to reflect words in question fragments inside the response.
 // For example, the phrase "your jacket" in "I want your jacket" should be
 // reflected to "my jacket" in the response.
-var ReflectedWords = map[string]string{
+var reflectedWords = map[string]string{
 	"am":     "are",
 	"was":    "were",
 	"i":      "you",
